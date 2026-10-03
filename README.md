@@ -1,124 +1,287 @@
 # ⚡ Redis Learning Journey
 
-> **Personal Redis handbook** — a practical, example-driven reference for understanding Redis concepts, backend patterns, and Node.js implementations.
+<p align="center">
+  <img src="https://img.shields.io/badge/Redis-Learning%20Journey-DC382D?style=for-the-badge&logo=redis&logoColor=white" />
+  <img src="https://img.shields.io/badge/Node.js-Backend%20Practice-339933?style=for-the-badge&logo=node.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/ioredis-Redis%20Client-DC382D?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/BullMQ-Job%20Queues-111111?style=for-the-badge" />
+</p>
 
-This README is intentionally written for **learning and revision**, not just documentation.  
-Each topic answers four questions:
+<p align="center">
+  <strong>A practical, example-driven Redis learning repository for understanding how Redis solves real backend problems.</strong>
+</p>
 
-**What is it? → Why is it used? → How does it work? → Where would I use it?**
+<p align="center">
+  <em>Learn the problem → understand the Redis primitive → implement it → compare alternatives → build the mental model.</em>
+</p>
 
 ---
 
-# 🧠 Redis at a Glance
+## 🧭 What This Repository Is
 
-### What is Redis?
+This is my **personal Redis learning handbook**.
 
-**Redis (Remote Dictionary Server)** is an open-source, in-memory data structure store commonly used for **caching, temporary data, background jobs, sessions, counters, and real-time communication**.
+The goal is not to collect Redis commands.
 
-The important idea is not simply:
-
-> “Redis is fast.”
-
-The better understanding is:
-
-> **Redis is a fast data layer that provides useful data structures for solving backend problems efficiently.**
-
-### Why is Redis fast?
-
-A simplified view:
+The goal is to understand:
 
 ```text
-Traditional persistent database
+                 BACKEND PROBLEM
+                        │
+                        ▼
+               ┌─────────────────┐
+               │  What kind of   │
+               │  problem is it? │
+               └────────┬────────┘
+                        │
+                        ▼
+              Choose Redis Feature
+                        │
+          ┌─────────────┼─────────────┐
+          ▼             ▼             ▼
+       String         Hash          List
+          │             │             │
+          ▼             ▼             ▼
+       Cache         Object         Queue
+                        │
+                        ▼
+                 Higher Patterns
+                        │
+          ┌─────────────┼─────────────┐
+          ▼             ▼             ▼
+       BullMQ        Pub/Sub        Streams
+```
 
+The repository is intentionally written for **learning and revision**, not just documentation.
+
+Every major topic should answer:
+
+> **What is it? → Why is it used? → How does it work? → When should I use it?**
+
+---
+
+# 🧠 Redis in One Mental Model
+
+## What is Redis?
+
+**Redis** is an in-memory data structure store commonly used for:
+
+* ⚡ Caching
+* 🔐 Sessions
+* ⏳ Temporary data
+* 🚦 Rate limiting
+* 📬 Background jobs
+* 📡 Real-time communication
+* 🏆 Leaderboards
+* 🔢 Counters
+* 🔄 Distributed coordination
+
+The important understanding is not:
+
+> ❌ Redis is fast.
+
+Instead:
+
+> ✅ **Redis is a fast data layer built around useful data structures and atomic operations.**
+
+---
+
+# ⚡ Why Is Redis Fast?
+
+A simplified traditional database path:
+
+```text
 Application
-     ↓
+     │
+     ▼
 Database
-     ↓
-Storage / SSD
+     │
+     ▼
+Storage
+     │
+     ▼
+Disk / SSD
 ```
 
-```text
-Redis
+Redis primarily works with memory:
 
+```text
 Application
-     ↓
-RAM
+     │
+     ▼
+ Redis Client
+     │
+     ▼
+   Redis
+     │
+     ▼
+    RAM
 ```
 
-Because Redis primarily works with memory, many operations can be performed with very low latency.
+This allows Redis to provide extremely low-latency access for many workloads.
 
-### ⚠️ Important distinction
+### But remember
 
-Redis should not automatically replace PostgreSQL or MongoDB.
+Redis does **not automatically replace** your primary database.
 
-A useful mental model is:
+A useful architecture is:
 
 ```text
-PostgreSQL / MongoDB
-        ↓
-Persistent source of truth
-
-Redis
-        ↓
-Fast / temporary / frequently accessed data
+             APPLICATION
+                  │
+        ┌─────────┴─────────┐
+        ▼                   ▼
+      Redis              Database
+        │                   │
+        │                   │
+   Fast / temporary      Durable /
+   / coordination        persistent
 ```
 
-### 🧠 Remember
+### 🧠 Mental shortcut
 
-> **Database = durable truth**  
-> **Redis = fast access and fast coordination**
+> **Database = durable truth**
+> **Redis = fast access + temporary state + coordination**
 
 ---
 
-# 🎯 When Should I Use Redis?
+# 🎯 The Redis Problem Map
 
-Instead of memorizing use cases, think about the **type of problem**.
-
-Redis is a strong candidate when data is:
+Instead of memorizing commands, classify the problem.
 
 ```text
-⚡ Frequently accessed
-⏳ Temporary
-🔄 Repeatedly calculated
-🚦 Used for limiting/counting
-📬 Processed in the background
-📡 Needed in real time
-🏆 Updated frequently for rankings
+                         Redis
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+        ▼                  ▼                  ▼
+      DATA             TEMPORARY          COORDINATION
+        │                  │                  │
+   ┌────┼────┐             │             ┌────┼────┐
+   ▼    ▼    ▼             ▼             ▼    ▼    ▼
+String Hash List           TTL          Queue Pub/Sub Streams
+   │    │    │             │             │
+   ▼    ▼    ▼             ▼             ▼
+Cache Object Ordered     Expiry       Background / Events
 ```
 
-### Common project scenarios
-
-| Problem | Redis solution |
-|---|---|
-| Repeated database reads | Caching |
-| Login/session storage | Session data |
-| OTP that expires | TTL |
-| Too many API requests | Rate limiting |
-| Background work | Queue / BullMQ |
-| Real-time events | Pub/Sub |
-| Game rankings | Sorted Sets |
-| Temporary cart data | Redis |
-| Fast counters | Atomic increment operations |
+This map is more important than memorizing individual commands.
 
 ---
 
-# 🛠️ 1. Setting Up Redis
+# 🗺️ Learning Roadmap
 
-For local development, Docker is a convenient way to run Redis without installing it directly on the host system.
+```text
+LEVEL 01 — FOUNDATIONS
+│
+├── Redis architecture
+├── Redis server / client
+├── Key → Value
+├── Strings
+└── TTL / Expiration
+        │
+        ▼
+LEVEL 02 — DATA STRUCTURES
+│
+├── Hashes
+├── Lists
+├── Sets
+└── Sorted Sets
+        │
+        ▼
+LEVEL 03 — BACKEND PATTERNS
+│
+├── Caching
+├── Sessions
+├── Rate Limiting
+├── Counters
+└── Temporary State
+        │
+        ▼
+LEVEL 04 — ASYNC SYSTEMS
+│
+├── Lists as queues
+├── Producer / Consumer
+├── BullMQ
+├── Workers
+└── Retry / Delayed Jobs
+        │
+        ▼
+LEVEL 05 — REAL-TIME SYSTEMS
+│
+├── Pub/Sub
+├── Channels
+├── Event broadcasting
+└── Presence / notifications
+        │
+        ▼
+LEVEL 06 — ADVANCED REDIS
+│
+├── Transactions
+├── Pipelines
+├── Lua / atomic operations
+├── Streams
+├── Distributed locks
+└── Rate-limiting algorithms
+        │
+        ▼
+LEVEL 07 — PRODUCTION REDIS
+│
+├── Persistence
+├── Replication
+├── Sentinel
+├── Cluster
+├── Memory management
+└── Observability
+```
 
-### Start Redis
+---
+
+# 📊 Learning Progress
+
+| Level               | Topic             | Status |
+| ------------------- | ----------------- | :----: |
+| 🟢 Foundation       | Redis setup       |    ✅   |
+| 🟢 Foundation       | Strings           |    ✅   |
+| 🟢 Foundation       | TTL               |    ✅   |
+| 🟢 Foundation       | JSON storage      |    ✅   |
+| 🟢 Data Structures  | Hashes            |    ✅   |
+| 🟢 Data Structures  | Lists             |    ✅   |
+| 🟡 Backend Patterns | Caching           |   🔄   |
+| 🟡 Backend Patterns | Sessions          |   🔜   |
+| 🟡 Backend Patterns | Rate Limiting     |   🔜   |
+| 🟢 Async Systems    | Basic Queue       |    ✅   |
+| 🟢 Async Systems    | BullMQ            |    ✅   |
+| 🟢 Real-Time        | Pub/Sub           |    ✅   |
+| 🔵 Advanced         | Sets              |   🔜   |
+| 🔵 Advanced         | Sorted Sets       |   🔜   |
+| 🔵 Advanced         | Streams           |   🔜   |
+| 🔵 Advanced         | Transactions      |   🔜   |
+| 🔵 Advanced         | Distributed Locks |   🔜   |
+| 🔴 Production       | Persistence       |   🔜   |
+| 🔴 Production       | Replication       |   🔜   |
+| 🔴 Production       | Sentinel          |   🔜   |
+| 🔴 Production       | Cluster           |   🔜   |
+
+> **Legend:** ✅ Learned · 🔄 Practicing · 🔜 Planned
+
+---
+
+# 🛠️ 01 — Redis Setup
+
+## Run Redis with Docker
 
 ```bash
 docker run --name redis -p 6379:6379 -d redis
 ```
 
-### Verify the container
+Check the container:
 
 ```bash
 docker ps
 ```
 
-### Test Redis
+Test Redis:
 
 ```bash
 docker exec -it redis redis-cli ping
@@ -130,7 +293,11 @@ Expected:
 PONG
 ```
 
-### Node.js connection with ioredis
+---
+
+## 🔌 Connect from Node.js
+
+Using `ioredis`:
 
 ```javascript
 import Redis from "ioredis";
@@ -141,161 +308,166 @@ const redis = new Redis({
 });
 ```
 
-Default Redis port:
+Architecture:
 
 ```text
-6379
-```
-
-### 🧠 Understanding the connection
-
-```text
-Node.js application
-        ↓
+Node.js Application
+        │
+        ▼
      ioredis
-        ↓
-   localhost:6379
-        ↓
+        │
+        ▼
+localhost:6379
+        │
+        ▼
       Redis
 ```
 
-`ioredis` is the Node.js client.  
-Redis is the actual server storing and processing the data.
+### Important distinction
+
+```text
+ioredis
+   │
+   └── Node.js client
+
+Redis
+   │
+   └── Actual server
+```
 
 ---
 
-# 🔑 2. Redis Basics — Key → Value
+# 🔑 02 — Redis Fundamentals
 
-At the simplest level:
+Redis fundamentally revolves around:
 
 ```text
-Key                  Value
-──────────────────────────────
-name              →  "Deepak"
+KEY → VALUE
 ```
 
-### Store data
+Example:
 
 ```redis
 SET name "Deepak"
-```
-
-### Read data
-
-```redis
 GET name
-```
-
-### Delete data
-
-```redis
 DEL name
 ```
 
-The basic lifecycle is:
+Lifecycle:
 
 ```text
-SET → Store
-GET → Read
-DEL → Remove
+SET
+ │
+ ▼
+STORE
+ │
+ ▼
+GET
+ │
+ ▼
+READ
+ │
+ ▼
+DEL
+ │
+ ▼
+REMOVE
 ```
 
-### Example
+---
 
-```redis
-SET user:101 "Deepak"
-GET user:101
-```
+## 🏷️ Key Naming
 
-Result:
-
-```text
-"Deepak"
-```
-
-### Why use meaningful keys?
-
-Instead of:
+Avoid meaningless keys:
 
 ```text
 101
 ```
 
-prefer:
+Prefer predictable namespaces:
 
 ```text
 user:101
 ```
 
-This creates a predictable naming convention and makes Redis data easier to understand.
+Examples:
 
-### 🧠 Remember
+```text
+user:101
+session:abc123
+otp:user101
+cart:user101
+cache:products
+rate-limit:192.168.1.10
+```
 
-> **Redis revolves around keys. Good key naming makes your Redis system easier to manage.**
+### 🧠 Key-design principle
+
+> **A good Redis key tells you what the data represents before you inspect the value.**
 
 ---
 
-# ⏳ 3. TTL and Expiration
+# ⏳ 03 — TTL and Expiration
 
-Redis can automatically delete data after a specified period.
+Redis can automatically remove data after a specified period.
 
-This is especially useful for **temporary data**.
-
-### OTP example
+Example:
 
 ```redis
 SET otp:user101 "483921" EX 300
 ```
 
-This means:
+Meaning:
 
 ```text
-Key: otp:user101
-Value: 483921
-TTL: 300 seconds
+otp:user101
+      │
+      ├── Value → 483921
+      │
+      └── TTL   → 300 seconds
 ```
 
-Check remaining time:
+Check TTL:
 
 ```redis
 TTL otp:user101
 ```
 
-### Why is this useful?
-
-Without TTL, you would have to write extra cleanup logic.
-
-With TTL:
+Visual model:
 
 ```text
-Store OTP
-   ↓
+SET OTP
+   │
+   ▼
 EX 300
-   ↓
-Wait 5 minutes
-   ↓
-Redis removes it automatically
+   │
+   ▼
+5 minutes
+   │
+   ▼
+Redis automatically expires it
 ```
 
-### Good use cases
+### Great use cases
 
-- 🔐 OTPs
-- 🔑 Temporary tokens
-- 🛒 Temporary carts
-- ⚡ Cached responses
-- 👤 Session expiration
+* 🔐 OTPs
+* 🔑 Temporary tokens
+* 🛒 Temporary carts
+* ⚡ Cached responses
+* 👤 Sessions
+* 🔄 Temporary locks
 
 ### 🧠 Remember
 
-> **TTL = “How long should this data live?”**
+> **TTL answers one question: “How long should this data live?”**
 
 ---
 
-# 👤 4. User Profiles with JSON Strings
+# 👤 04 — Storing Objects
 
-One approach is to store the entire user object as one Redis String.
+There are two important approaches explored here.
 
-Example:
+## Option A — JSON String
 
 ```javascript
 await redis.set(
@@ -307,76 +479,40 @@ await redis.set(
 );
 ```
 
-Redis conceptually stores:
-
-```text
-user:101
-    ↓
-{"name":"Deepak","email":"deepak@gmail.com"}
-```
-
-To read it:
+Read:
 
 ```javascript
-const user = await redis.get("user:101");
+const user = await redis.get(`user:${id}`);
 const data = JSON.parse(user);
 ```
 
-### Why does this work well?
-
-Your application already works with JavaScript objects.
-
-So the process is straightforward:
+Mental model:
 
 ```text
 JavaScript Object
-       ↓
+       │
+       ▼
 JSON.stringify()
-       ↓
+       │
+       ▼
 Redis String
-       ↓
+       │
+       ▼
 JSON.parse()
-       ↓
+       │
+       ▼
 JavaScript Object
 ```
 
-### When is JSON a good choice?
+### Good when
 
-When the application usually needs the **whole object**.
-
-For example:
-
-```text
-GET user profile
-      ↓
-Need name + email + age + role
-      ↓
-Read entire object
-```
-
-### Limitation
-
-Suppose only the email changes.
-
-With a JSON string, the normal approach is:
-
-```text
-GET whole object
-      ↓
-Modify email
-      ↓
-JSON.stringify()
-      ↓
-SET whole object again
-```
-
-That is less convenient when individual fields change frequently.
+The application normally wants the **entire object**.
 
 ---
 
-# 🧩 5. Redis Hashes
+# 🧩 05 — Redis Hashes
 
-A Redis Hash stores an object as separate fields.
+A Hash represents an object as individual fields.
 
 ```redis
 HSET user:101 name "Deepak"
@@ -384,168 +520,136 @@ HSET user:101 email "deepak@gmail.com"
 HSET user:101 age 21
 ```
 
-Conceptually:
+Visual model:
 
 ```text
 user:101
+│
 ├── name  → Deepak
 ├── email → deepak@gmail.com
 └── age   → 21
 ```
 
-Now changing one field is simple:
+Update one field:
 
 ```redis
 HSET user:101 email "new@gmail.com"
 ```
 
-### Why use Hashes?
+---
 
-Because many real-world objects naturally look like:
+## ⚔️ JSON vs Hash
 
-```text
-User
-├── name
-├── email
-├── age
-└── role
-```
-
-A Hash lets Redis work with those fields directly.
-
-### JSON vs Hash
-
-| JSON String | Redis Hash |
-|---|---|
-| Whole object stored together | Fields stored separately |
-| Very simple with JavaScript | More Redis-specific |
-| Good for whole-object access | Good for field-level access |
-| `SET / GET` | `HSET / HGET` |
+|                        | JSON String     | Redis Hash        |
+| ---------------------- | --------------- | ----------------- |
+| Model                  | Whole object    | Individual fields |
+| Read                   | Whole value     | Individual fields |
+| Update one field       | Rewrite object  | Update field      |
+| JavaScript simplicity  | ⭐⭐⭐⭐⭐           | ⭐⭐⭐⭐              |
+| Field-level operations | ⭐⭐              | ⭐⭐⭐⭐⭐             |
+| Best mental model      | 📦 Whole object | 🧩 Object fields  |
 
 ### 🧠 Golden Rule
 
-> **JSON → think “whole object”**  
-> **Hash → think “individual fields”**
+> **JSON → “Give me the object.”**
+> **Hash → “Give me the fields.”**
 
 ---
 
-# 📋 6. Redis Lists
+# 📋 06 — Redis Lists
 
-A Redis List is an **ordered collection of values**.
-
-For learning queues, the important idea is:
+A List is an **ordered collection**.
 
 ```text
-LEFT                        RIGHT
- ↓                            ↓
+LEFT                         RIGHT
+ ↓                             ↓
+
 [ Job C ] [ Job B ] [ Job A ]
- ↑                            ↑
+
+ ↑                             ↑
 LPUSH                         RPOP
 ```
 
-Using:
+Example:
 
 ```redis
 LPUSH emails "Job A"
 RPOP emails
 ```
 
-we can build a basic FIFO queue.
-
-### Why does this create a queue?
-
-Suppose we add:
+This creates a simple FIFO queue.
 
 ```text
 Job A
+  ↓
 Job B
+  ↓
 Job C
-```
 
-with `LPUSH`.
-
-Then `RPOP` removes the oldest item first:
-
-```text
-Job A → Job B → Job C
-```
-
-So:
-
-> **First In → First Out**
-
-### Practical example
-
-```javascript
-await redis.lpush(
-  "emails",
-  JSON.stringify({
-    email: "deepak@gmail.com",
-    type: "welcome"
-  })
-);
-```
-
-Retrieve a job:
-
-```javascript
-const job = await redis.rpop("emails");
+First In → First Out
 ```
 
 ### 🧠 Remember
 
-> **List = ordered data**  
+> **List = ordered data**
 > **LPUSH + RPOP = simple FIFO queue**
 
 ---
 
-# 📬 7. Producer → Queue → Consumer
+# 📬 07 — Producer → Queue → Consumer
 
-This was an important backend pattern from the email queue experiment.
+This is one of the most important backend patterns in this repository.
 
 ```text
-Producer
-    │
-    │ Add work
-    ▼
-┌─────────────┐
-│ Redis Queue │
-└──────┬──────┘
-       │
-       │ Take work
-       ▼
-   Consumer
+                PRODUCER
+                   │
+                   │ creates work
+                   ▼
+            ┌─────────────┐
+            │ Redis Queue │
+            └──────┬──────┘
+                   │
+                   │ takes work
+                   ▼
+                CONSUMER
+                   │
+                   ▼
+             Process Job
 ```
 
-### Example
-
-A user requests a welcome email:
+### Real backend example
 
 ```text
 POST /welcome-email
-        ↓
-Backend creates email job
-        ↓
-Redis queue
-        ↓
-Worker/consumer processes job
+        │
+        ▼
+Create email job
+        │
+        ▼
+Redis Queue
+        │
+        ▼
+Background Worker
+        │
+        ▼
+Send Email
 ```
-
-### Why use a queue?
-
-Imagine email sending takes time.
 
 Without a queue:
 
 ```text
 User
- ↓
+ │
+ ▼
 API
- ↓
+ │
+ ▼
 Send Email
- ↓
+ │
+ ▼
 Wait
- ↓
+ │
+ ▼
 Response
 ```
 
@@ -553,63 +657,69 @@ With a queue:
 
 ```text
 User
- ↓
+ │
+ ▼
 API
- ↓
-Add job to queue
- ↓
-Respond quickly
+ │
+ ▼
+Queue Job
+ │
+ ▼
+Fast Response
 
-Later:
+       ...later...
+
 Queue
- ↓
+ │
+ ▼
 Worker
- ↓
+ │
+ ▼
 Send Email
 ```
 
-This separates **request handling** from **background work**.
+### 🧠 Core principle
 
-### 🧠 Remember
-
-> **Producer creates work.**  
-> **Queue holds work.**  
-> **Consumer processes work.**
+> **Producer creates work. Queue stores work. Consumer processes work.**
 
 ---
 
-# 🐂 8. BullMQ
+# 🐂 08 — BullMQ
 
-**BullMQ** is a Node.js job queue library built on Redis.
+BullMQ is a Node.js job queue library built around Redis.
 
-It solves the same general problem as the basic Redis List queue, but at a much higher level.
-
-### Basic Redis queue
+A manual queue might require:
 
 ```text
-You manually manage:
 LPUSH
 RPOP
-workers
-retry logic
-job handling
+Workers
+Retries
+Failure handling
+Job state
+Scheduling
+Concurrency
 ```
 
-### BullMQ
+BullMQ provides higher-level abstractions for these concerns.
 
 ```text
 Producer
-   ↓
+   │
+   ▼
 BullMQ Queue
-   ↓
-Redis
-   ↓
-Worker
-   ↓
+   │
+   ▼
+ Redis
+   │
+   ▼
+ Worker
+   │
+   ▼
 Process Job
 ```
 
-Example:
+Add a job:
 
 ```javascript
 await queue.add("sendEmail", {
@@ -625,26 +735,18 @@ new Worker("emailQueue", async (job) => {
 });
 ```
 
-### Why is BullMQ useful?
+### Why BullMQ?
 
-A production application often needs more than:
+Production background processing often needs:
 
-```text
-Put job in → Take job out
-```
+* 🔁 Retries
+* ⏰ Delayed jobs
+* 📊 Job states
+* ⚙️ Concurrency
+* ❌ Failed-job handling
+* 👷 Workers
 
-It may need:
-
-- Retry failed jobs
-- Delayed jobs
-- Job states
-- Concurrency
-- Failed-job handling
-- Background workers
-
-BullMQ gives you those concepts instead of requiring you to build everything manually.
-
-### Common uses
+### Common use cases
 
 ```text
 📧 Email processing
@@ -654,25 +756,29 @@ BullMQ gives you those concepts instead of requiring you to build everything man
 📊 Report generation
 💳 Background operations
 🔄 Retryable tasks
-⏰ Scheduled/delayed jobs
+⏰ Scheduled jobs
 ```
 
 ### 🧠 Important distinction
 
-> **Redis List → understand how a queue works**  
-> **BullMQ → build a richer job-processing system**
+> **Redis List → learn how a queue works.**
+> **BullMQ → build a richer job-processing system.**
 
 ---
 
-# 📡 9. Redis Pub/Sub
+# 📡 09 — Redis Pub/Sub
 
-**Pub/Sub (Publish/Subscribe)** is a real-time messaging mechanism.
+Pub/Sub solves a different problem.
 
-Instead of storing a job for one worker, the idea is:
+Instead of:
 
-> “An event happened. Anyone listening should know about it.”
+> “Someone needs to process this job.”
 
-### Architecture
+Pub/Sub means:
+
+> **“Something happened. Tell everyone who is listening.”**
+
+Architecture:
 
 ```text
                  Publisher
@@ -683,12 +789,12 @@ Instead of storing a job for one worker, the idea is:
               │ Channel     │
               └──────┬──────┘
                      │
-              ┌──────┴──────┐
-              ▼             ▼
-        Subscriber A   Subscriber B
+             ┌───────┴───────┐
+             ▼               ▼
+       Subscriber A    Subscriber B
 ```
 
-### Publisher
+Publish:
 
 ```javascript
 await publisher.publish(
@@ -697,7 +803,7 @@ await publisher.publish(
 );
 ```
 
-### Subscriber
+Subscribe:
 
 ```javascript
 await subscriber.subscribe("message");
@@ -707,331 +813,668 @@ subscriber.on("message", (channel, message) => {
 });
 ```
 
-Output:
+---
+
+## 🌐 Real-world example
+
+Suppose an order is created:
 
 ```text
-Hello Redis
-```
-
-### Why do we need Pub/Sub?
-
-Suppose an order is placed:
-
-```text
-Order created
-      ↓
+Order Created
+      │
+      ▼
 Publish "order-created"
-      ↓
-Redis channel
-      ↓
-┌──────────────┬──────────────┐
-↓              ↓              ↓
-Web App    Notification    Analytics
+      │
+      ▼
+ Redis Channel
+      │
+ ┌────┼──────────────┐
+ ▼    ▼              ▼
+Web  Notification  Analytics
 ```
 
-Multiple subscribers can react to the same event.
+Possible uses:
 
-### Common use cases
-
-- 💬 Chat
-- 🔔 Real-time notifications
-- 📊 Live dashboards
-- 🎮 Multiplayer events
-- 🔄 Microservice event communication
-- 🟢 Presence/status updates
+* 💬 Chat
+* 🔔 Notifications
+* 📊 Live dashboards
+* 🎮 Multiplayer events
+* 🟢 Presence updates
+* 🔄 Service communication
 
 ---
 
-# ⚠️ 10. Pub/Sub Limitation
+# ⚠️ 10 — Pub/Sub's Important Limitation
 
 Pub/Sub is designed for **real-time delivery**, not durable message storage.
 
-Suppose:
+If a subscriber is offline:
 
 ```text
 Publisher
-    ↓
-Redis
-    ↓
+    │
+    ▼
+ Redis
+    │
+    ▼
 Subscriber
+    ✕
+  offline
 ```
 
-but the subscriber is offline:
+The subscriber can miss the message.
 
-```text
-Publisher → Redis → Subscriber ❌ offline
-```
-
-That subscriber misses the message.
-
-This is very different from a durable queue.
-
-### Therefore
+This creates an important distinction:
 
 ```text
 Need real-time broadcast?
-        ↓
+        │
+        ▼
      Pub/Sub
 
-Need reliable background work?
-        ↓
-   BullMQ / Queue
+Need background work?
+        │
+        ▼
+   Queue / BullMQ
 
-Need persistent event history?
-        ↓
-   Redis Streams
+Need durable event history?
+        │
+        ▼
+    Redis Streams
 ```
 
 ### 🧠 Remember
 
-> **Pub/Sub cares about real-time delivery.**  
-> **Queues care about processing work.**
+> **Pub/Sub = “Something happened.”**
+> **Queue = “Someone needs to do something.”**
+> **Streams = “Keep the event history.”**
 
 ---
 
-# ⚔️ 11. Queue vs Pub/Sub vs BullMQ
+# ⚔️ 11 — Queue vs BullMQ vs Pub/Sub vs Streams
 
-| Feature | Redis List Queue | BullMQ | Redis Pub/Sub |
-|---|---|---|---|
-| Main purpose | Basic queue | Background jobs | Real-time messaging |
-| Pattern | Producer → Consumer | Producer → Worker | Publisher → Subscribers |
-| Redis based | ✅ | ✅ | ✅ |
-| Retries | Manual | ✅ | ❌ |
-| Delayed jobs | Manual | ✅ | ❌ |
-| Job states | Manual | ✅ | ❌ |
-| Broadcast to many listeners | ❌ | ❌ | ✅ |
-| Missed while offline | Depends on stored queue | Job can remain available | ✅ Message is missed |
+| Feature          | Redis List |             BullMQ | Pub/Sub | Streams |
+| ---------------- | ---------: | -----------------: | ------: | ------: |
+| Basic queue      |          ✅ |                  ✅ |       ❌ |       ✅ |
+| Background jobs  |         ⚠️ |              ⭐⭐⭐⭐⭐ |       ❌ |    ⭐⭐⭐⭐ |
+| Retries          |     Manual |                  ✅ |       ❌ |  Manual |
+| Delayed jobs     |     Manual |                  ✅ |       ❌ |  Manual |
+| Job states       |     Manual |                  ✅ |       ❌ |       ❌ |
+| Broadcast        |          ❌ |                  ❌ |       ✅ |       ❌ |
+| Durable messages |    Limited |          Job-based |       ❌ |       ✅ |
+| Consumer groups  |          ❌ | BullMQ abstraction |       ❌ |       ✅ |
+| Event history    |          ❌ |                  ❌ |       ❌ |       ✅ |
 
-### 🧠 The easiest decision rule
+### 🎯 Decision rule
 
 ```text
-“Someone needs to DO something”
-            ↓
-          Queue
-
-“A system needs to KNOW something happened”
-            ↓
-         Pub/Sub
+                  What is the problem?
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+      DO WORK          BROADCAST         KEEP EVENTS
+          │                │                │
+          ▼                ▼                ▼
+       Queue            Pub/Sub          Streams
+          │
+          ▼
+       BullMQ
 ```
 
 ---
 
-# 🏗️ 12. How Redis Fits Into a Real Backend
+# 🏗️ 12 — How Redis Fits Into a Real Backend
 
-A realistic backend may use Redis for several completely different purposes at the same time.
+Redis becomes much more useful when viewed as part of a larger architecture.
 
 ```text
-                       Client
-                         │
-                         ▼
-                  Node / FastAPI
-                         │
-        ┌────────────────┼────────────────┐
-        │                │                │
-        ▼                ▼                ▼
-      Redis            BullMQ          Pub/Sub
-      Cache             Jobs            Events
-        │                │                │
-        ▼                ▼                ▼
-     Fast Reads      Background      Real-Time
-                     Processing       Updates
+                         CLIENT
+                           │
+                           ▼
+                    ┌────────────┐
+                    │  Backend   │
+                    │ Node/FastAPI│
+                    └─────┬──────┘
+                          │
+          ┌───────────────┼────────────────┐
+          │               │                │
+          ▼               ▼                ▼
+       Redis            BullMQ           Pub/Sub
+       Cache             Jobs             Events
+          │               │                │
+          ▼               ▼                ▼
+      Fast Reads      Background       Real-Time
+                      Processing       Updates
+          │
+          ▼
+   PostgreSQL / MongoDB
+```
+
+---
+
+# 🛒 Example — E-Commerce Architecture
+
+```text
+                    E-COMMERCE BACKEND
+                           │
+       ┌───────────────────┼────────────────────┐
+       │                   │                    │
+       ▼                   ▼                    ▼
+    Redis               Database             BullMQ
+       │                   │                    │
+       ├── Cache           ├── Users            ├── Email
+       ├── Session         ├── Products         ├── Reports
+       ├── Cart            ├── Orders           └── Processing
+       ├── OTP             └── Payments
+       └── Rate Limit
+```
+
+The important lesson:
+
+> **Do not add Redis because a project is “modern.” Add Redis because a specific problem requires it.**
+
+---
+
+# 🚀 13 — Caching
+
+Caching is one of Redis's most important backend applications.
+
+Imagine:
+
+```text
+Client
+  │
+  ▼
+API
+  │
+  ▼
+Database
+```
+
+Every repeated request hits the database.
+
+With caching:
+
+```text
+Client
+  │
+  ▼
+API
+  │
+  ▼
+Redis Cache
+  │
+  ├── HIT ──────► Return data
+  │
+  └── MISS
+       │
+       ▼
+    Database
+       │
+       ▼
+   Store in Redis
+       │
+       ▼
+   Return data
+```
+
+This pattern is commonly called:
+
+> **Cache-Aside**
+
+### 🧠 Cache decision
+
+Use caching when:
+
+```text
+Data is requested frequently
+        +
+Data is expensive to retrieve
+        +
+Data can tolerate some staleness
+```
+
+---
+
+# 🚦 14 — Rate Limiting
+
+Redis is useful for tracking request counts.
+
+Conceptually:
+
+```text
+User
+ │
+ ▼
+API Request
+ │
+ ▼
+Redis Counter
+ │
+ ├── Under limit → Allow
+ │
+ └── Over limit  → Reject
+```
+
+Example mental model:
+
+```text
+rate-limit:user101
         │
         ▼
- PostgreSQL / MongoDB
+      count
+        │
+        ▼
+     TTL window
 ```
 
-### Example: E-commerce application
+This is especially useful for:
 
-```text
-Redis
-├── Product Cache
-├── Session Data
-├── Shopping Cart
-├── OTP
-├── Rate Limiting
-└── Background Jobs
-
-Database
-├── Users
-├── Products
-├── Orders
-└── Payments
-```
-
-The key is to use Redis where it solves a specific problem, not simply because Redis is available.
+* Login attempts
+* OTP endpoints
+* Public APIs
+* Expensive endpoints
+* Abuse prevention
 
 ---
 
-# 🧪 13. What Has Been Implemented
+# 🔐 15 — Sessions and Temporary Authentication State
 
-This learning journey has included practical Node.js experiments with **Express + ioredis**.
+Redis can store session information:
 
-### ✅ User Profiles
+```text
+Browser
+   │
+   ▼
+Session ID
+   │
+   ▼
+Redis
+   │
+   ▼
+User Session
+```
+
+Example:
+
+```text
+session:abc123
+      │
+      ├── userId
+      ├── role
+      └── expiration
+```
+
+The database continues to hold durable user information.
+
+Redis manages fast temporary session state.
+
+---
+
+# 🧪 16 — Practical Experiments
+
+The best way to learn Redis is to connect concepts to actual backend problems.
+
+## Experiment 01 — User Profile
 
 ```text
 POST /user
+      │
+      ▼
+Store in Redis
+      │
+      ▼
 GET /user/:id
+      │
+      ▼
+Read from Redis
 ```
 
-Concepts:
+Learn:
 
-- Redis keys
-- JSON string storage
-- Reading objects from Redis
-- User profile representation
-- Hash tradeoff
+* Strings
+* JSON
+* Keys
+* Serialization
+* Deserialization
 
-### ✅ Basic Email Queue
+---
+
+## Experiment 02 — Email Queue
 
 ```text
 POST /welcome-email
+        │
+        ▼
+    Redis List
+        │
+        ▼
 GET /process-emails
+        │
+        ▼
+    Process Job
 ```
 
-Concepts:
+Learn:
 
-- Redis Lists
-- `LPUSH`
-- `RPOP`
-- Producer / Consumer
-- FIFO queue behavior
-
-### ✅ BullMQ
-
-Concepts:
-
-- Queue
-- Job
-- Producer
-- Worker
-- Redis as the queue backend
-
-### ✅ Redis Pub/Sub
-
-Concepts:
-
-- Publisher
-- Subscriber
-- Channel
-- Real-time message delivery
-- Separate publisher/subscriber Redis connections
+* Lists
+* LPUSH
+* RPOP
+* FIFO
+* Producer / Consumer
 
 ---
 
-# 🧠 14. Redis Revision Notes
-
-### 🔑 Key-Value
-
-```redis
-SET user:1 "Deepak"
-GET user:1
-```
-
-**Think:** basic storage.
-
----
-
-### 👤 Hash
-
-```redis
-HSET user:1 name "Deepak"
-HSET user:1 email "deepak@gmail.com"
-```
-
-**Think:** object fields.
-
----
-
-### 📋 List
-
-```redis
-LPUSH emails "job"
-RPOP emails
-```
-
-**Think:** ordered data / basic queue.
-
----
-
-### ⏳ TTL
-
-```redis
-SET otp:1 "1234" EX 60
-```
-
-**Think:** temporary data.
-
----
-
-### 🐂 BullMQ
+## Experiment 03 — BullMQ
 
 ```text
-Producer → Queue → Worker
+API
+ │
+ ▼
+Queue.add()
+ │
+ ▼
+BullMQ
+ │
+ ▼
+Redis
+ │
+ ▼
+Worker
 ```
 
-**Think:** background work.
+Learn:
+
+* Jobs
+* Queues
+* Workers
+* Retry concepts
+* Background processing
 
 ---
 
-### 📡 Pub/Sub
+## Experiment 04 — Pub/Sub
 
 ```text
-Publisher → Channel → Subscribers
+Publisher
+    │
+    ▼
+ Channel
+    │
+ ┌──┴──┐
+ ▼     ▼
+Sub A Sub B
 ```
 
-**Think:** real-time events.
+Learn:
+
+* Channels
+* Publishers
+* Subscribers
+* Real-time communication
+* Separate Redis connections
 
 ---
 
-# 🧩 15. Fast Decision Framework
+# 🧠 17 — Redis Data Structures
 
-When starting a project, ask:
-
-### “What kind of data/problem do I have?”
+Redis becomes powerful because it is not just:
 
 ```text
-Simple value?
-   ↓
- String
-
-Object with fields?
-   ↓
- Hash
-
-Ordered collection?
-   ↓
- List
-
-Needs automatic expiration?
-   ↓
- TTL
-
-Frequently requested data?
-   ↓
- Cache
-
-Background task?
-   ↓
- Queue / BullMQ
-
-Real-time event?
-   ↓
- Pub/Sub
-
-Need durable event history?
-   ↓
- Streams
+Key → String
 ```
 
-This is more useful than memorizing isolated Redis commands.
+It provides multiple data structures.
+
+| Structure  | Think Of It As        | Common Use            |
+| ---------- | --------------------- | --------------------- |
+| String     | 📦 Value              | Cache, token, counter |
+| Hash       | 👤 Object             | User/session data     |
+| List       | 📋 Ordered collection | Queue                 |
+| Set        | 🧩 Unique collection  | Tags, membership      |
+| Sorted Set | 🏆 Ranked collection  | Leaderboards          |
+| Stream     | 📜 Event log          | Event processing      |
+
+### Mental map
+
+```text
+String
+  ↓
+Simple value
+
+Hash
+  ↓
+Object fields
+
+List
+  ↓
+Ordered items
+
+Set
+  ↓
+Unique items
+
+Sorted Set
+  ↓
+Ranked items
+
+Stream
+  ↓
+Event history
+```
 
 ---
 
-# 🚨 16. Common Mistakes Learned
+# 🔬 18 — Understanding Redis Through Operations
 
-### Redis is not only a cache
+Don't just memorize:
 
-Redis can also support:
+```text
+SET
+GET
+HSET
+LPUSH
+RPOP
+```
+
+Ask what operation your application needs.
+
+```text
+Need a simple value?
+        ↓
+      String
+
+Need one field?
+        ↓
+      Hash
+
+Need ordered items?
+        ↓
+      List
+
+Need uniqueness?
+        ↓
+       Set
+
+Need ranking?
+        ↓
+   Sorted Set
+
+Need event history?
+        ↓
+     Stream
+```
+
+This is the real Redis skill:
+
+> **Problem → Data structure → Operation**
+
+---
+
+# ⚙️ 19 — Atomic Operations
+
+One important Redis property is that many individual commands are atomic.
+
+For example:
+
+```redis
+INCR requests:user101
+```
+
+Conceptually:
+
+```text
+Read count
+   ↓
+Increment
+   ↓
+Write count
+```
+
+Redis handles the command atomically.
+
+This makes Redis useful for:
+
+* Counters
+* Rate limiting
+* Sequence numbers
+* Metrics
+* Coordination
+
+### 🧠 Think
+
+> **Atomic operation = the operation happens as one indivisible action.**
+
+---
+
+# 🔄 20 — Transactions and Pipelines
+
+These are different concepts and should not be confused.
+
+### Transactions
+
+Useful when multiple Redis commands should be grouped.
+
+```text
+MULTI
+  │
+  ├── Command 1
+  ├── Command 2
+  └── Command 3
+  │
+ EXEC
+```
+
+### Pipelines
+
+Useful when you want to reduce network round trips.
+
+```text
+Without pipeline:
+
+App → Redis
+App → Redis
+App → Redis
+
+With pipeline:
+
+App ─────────► Redis
+      commands
+```
+
+### 🧠 Remember
+
+> **Transaction → command grouping / execution semantics**
+> **Pipeline → communication efficiency**
+
+---
+
+# 📜 21 — Redis Streams
+
+Streams solve a different problem from Pub/Sub.
+
+Think:
+
+> **“I want events to remain available so consumers can process them.”**
+
+Conceptually:
+
+```text
+Producer
+   │
+   ▼
+┌──────────────────────────────┐
+│        Redis Stream          │
+│                              │
+│ event 1 → event 2 → event 3 │
+└──────────────┬───────────────┘
+               │
+       ┌───────┴───────┐
+       ▼               ▼
+ Consumer A        Consumer B
+```
+
+### Pub/Sub vs Streams
+
+```text
+Pub/Sub
+   ↓
+Real-time delivery
+   ↓
+Missed message can be lost
+
+Streams
+   ↓
+Persistent event entries
+   ↓
+Consumers can process later
+```
+
+### 🧠 Mental model
+
+> **Pub/Sub = live radio**
+> **Streams = recorded event log**
+
+---
+
+# 🔒 22 — Distributed Locks
+
+Sometimes multiple application instances may attempt the same operation.
+
+Example:
+
+```text
+Server A ──┐
+           │
+           ├──► Same resource
+           │
+Server B ──┘
+```
+
+A distributed lock can coordinate access:
+
+```text
+Server A
+   │
+   ▼
+Acquire Lock
+   │
+   ▼
+Perform Work
+   │
+   ▼
+Release Lock
+```
+
+This becomes useful in distributed systems where multiple workers or servers may compete for the same resource.
+
+---
+
+# 🚨 23 — Common Mistakes
+
+## ❌ Redis is only a cache
+
+Redis can support:
 
 ```text
 Cache
@@ -1045,172 +1488,540 @@ Streams
 Locks
 ```
 
-### BullMQ is not Pub/Sub
+---
+
+## ❌ BullMQ and Pub/Sub are the same
+
+They are not.
 
 ```text
-BullMQ  → background job processing
+BullMQ
+  ↓
+Background job processing
 
-Pub/Sub → real-time event broadcasting
+Pub/Sub
+  ↓
+Real-time event broadcasting
 ```
 
-Both use Redis, but they solve different problems.
+---
 
-### Redis does not automatically replace your database
+## ❌ Redis automatically replaces the database
 
 A common architecture is:
 
 ```text
-Database → permanent data
-Redis    → fast / temporary / coordination layer
-```
-
-### Not every project needs Redis
-
-Adding Redis without a real requirement can increase complexity.
-
-Use it when it solves a clear problem such as:
-
-```text
-Performance
-Caching
-Asynchronous processing
-Real-time communication
-Temporary state
-Rate limiting
-```
-
----
-
-# 🗺️ 17. Learning Progress
-
-```text
-Redis Fundamentals       ✅
-Redis Setup              ✅
-SET / GET / DEL          ✅
-TTL / Expiration         ✅
-JSON Storage             ✅
-Redis Hash Concept       ✅
-Redis Lists              ✅
-Basic Queue              ✅
-BullMQ                   ✅
-Redis Pub/Sub            ✅
-```
-
-### Next Stage
-
-```text
-Sets
+Database
    ↓
-Sorted Sets
-   ↓
-Caching
-   ↓
-Cache-Aside Pattern
-   ↓
-Rate Limiting
-   ↓
-Sessions
-   ↓
-Transactions
-   ↓
-Pipelines
-   ↓
-Streams
-   ↓
-Distributed Locks
-   ↓
-Persistence
-   ↓
-Replication
-   ↓
-Sentinel
-   ↓
-Cluster
-   ↓
-Production Redis
-```
+Permanent data
 
----
-
-# 📖 18. Six-Month Revision Map
-
-When revisiting this repository later, remember Redis through **problems**, not definitions:
-
-```text
-Need FAST access?
-      → Redis
-
-Need TEMPORARY data?
-      → TTL
-
-Need an OBJECT?
-      → JSON / Hash
-
-Need ORDERED data?
-      → List
-
-Need BACKGROUND work?
-      → Queue / BullMQ
-
-Need REAL-TIME messages?
-      → Pub/Sub
-
-Need REPEATED database reads to be faster?
-      → Cache
-
-Need RELIABLE event history?
-      → Streams
-```
-
-## ⭐ One-Minute Redis Summary
-
-```text
 Redis
+   ↓
+Fast / temporary / coordination data
+```
+
+---
+
+## ❌ Every project needs Redis
+
+Redis introduces additional:
+
+* Infrastructure
+* Memory usage
+* Failure modes
+* Operational complexity
+* Data consistency considerations
+
+Use it when it solves a real problem.
+
+---
+
+# ⚔️ 24 — Redis vs Database
+
+| Requirement                      | Database | Redis |
+| -------------------------------- | -------: | ----: |
+| Durable source of truth          |    ⭐⭐⭐⭐⭐ |    ⭐⭐ |
+| Very fast access                 |      ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| Complex queries                  |    ⭐⭐⭐⭐⭐ |    ⭐⭐ |
+| Temporary data                   |       ⭐⭐ | ⭐⭐⭐⭐⭐ |
+| Caching                          |       ⭐⭐ | ⭐⭐⭐⭐⭐ |
+| Background jobs                  |       ⭐⭐ | ⭐⭐⭐⭐⭐ |
+| Real-time messaging              |       ⭐⭐ | ⭐⭐⭐⭐⭐ |
+| Large persistent relational data |    ⭐⭐⭐⭐⭐ |     ⭐ |
+
+### 🧠 Architecture principle
+
+> **Don't ask “Redis or database?”**
+> Ask **“What responsibility should each system own?”**
+
+---
+
+# 🏗️ 25 — The Backend Layer Mental Model
+
+A useful way to think about modern backend infrastructure:
+
+```text
+                    APPLICATION
+                         │
+        ┌────────────────┼─────────────────┐
+        │                │                 │
+        ▼                ▼                 ▼
+     DATABASE          REDIS             QUEUE
+        │                │                 │
+ Durable truth      Fast state         Background work
+        │                │                 │
+        │        ┌───────┼───────┐         │
+        │        ▼       ▼       ▼         │
+        │      Cache   Session  Events     │
+        │                                  │
+        └──────────────────────────────────┘
+```
+
+Each component has a responsibility.
+
+That is more important than memorizing technology names.
+
+---
+
+# 🧭 26 — Fast Decision Framework
+
+When starting a backend feature, ask:
+
+```text
+What kind of problem am I solving?
+              │
+              ▼
+        ┌───────────────┐
+        │ Simple value? │
+        └───────┬───────┘
+                ▼
+             String
+
+Object with fields?
+        ↓
+      Hash
+
+Whole object?
+        ↓
+   JSON String
+
+Ordered collection?
+        ↓
+       List
+
+Unique collection?
+        ↓
+        Set
+
+Ranking?
+        ↓
+   Sorted Set
+
+Automatic expiration?
+        ↓
+        TTL
+
+Frequently requested data?
+        ↓
+       Cache
+
+Background work?
+        ↓
+    Queue / BullMQ
+
+Real-time event?
+        ↓
+      Pub/Sub
+
+Durable event history?
+        ↓
+      Streams
+
+Cross-server coordination?
+        ↓
+ Distributed Lock
+```
+
+---
+
+# 🧠 27 — One-Minute Redis Revision
+
+```text
+REDIS
 │
-├── ⚡ Fast in-memory data
+├── ⚡ In-memory data layer
 │
-├── 🔑 String
-│   └── Simple values
+├── 🔑 STRING
+│   └── Simple values / cache / counters
 │
-├── 👤 Hash
+├── 👤 HASH
 │   └── Object fields
 │
-├── 📋 List
+├── 📋 LIST
 │   └── Ordered data / basic queue
+│
+├── 🧩 SET
+│   └── Unique values
+│
+├── 🏆 SORTED SET
+│   └── Ranking / leaderboard
 │
 ├── ⏳ TTL
 │   └── Automatic expiration
 │
-├── 🐂 BullMQ
+├── 🐂 BULLMQ
 │   └── Background jobs
 │
-└── 📡 Pub/Sub
-    └── Real-time events
+├── 📡 PUB/SUB
+│   └── Real-time events
+│
+├── 📜 STREAMS
+│   └── Durable event history
+│
+└── 🔒 LOCKS
+    └── Distributed coordination
 ```
-
-> **The goal is not to memorize Redis commands. The goal is to look at a backend problem and recognize which Redis feature solves it.**
 
 ---
 
-# 🚀 Learning Philosophy
+# 🎯 28 — Redis Through Backend Problems
 
-This repository follows:
+This is the most important revision section.
+
+### “I need faster repeated reads.”
 
 ```text
-Understand
-    ↓
-See a real problem
-    ↓
-Implement it
-    ↓
-Debug it
-    ↓
-Compare alternatives
-    ↓
-Write down the mental model
-    ↓
-Revisit later
+Database
+   ↓
+Cache
+   ↓
+Redis
+```
+
+### “I need temporary data.”
+
+```text
+Redis
+   +
+TTL
+```
+
+### “I need to store an object.”
+
+```text
+Whole object
+   ↓
+JSON String
+
+Field-level access
+   ↓
+Hash
+```
+
+### “I need background processing.”
+
+```text
+Producer
+   ↓
+Queue
+   ↓
+Worker
+```
+
+### “I need production-grade jobs.”
+
+```text
+BullMQ
+```
+
+### “I need real-time broadcasting.”
+
+```text
+Publisher
+   ↓
+Redis Channel
+   ↓
+Subscribers
+```
+
+### “I need event history.”
+
+```text
+Redis Streams
+```
+
+### “I need unique values.”
+
+```text
+Redis Set
+```
+
+### “I need ranking.”
+
+```text
+Sorted Set
+```
+
+---
+
+# 🧪 29 — Practical Learning Philosophy
+
+This repository follows a problem-first learning cycle:
+
+```text
+                 ┌──────────────┐
+                 │ Understand   │
+                 └──────┬───────┘
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │ Find Problem │
+                 └──────┬───────┘
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │ Implement    │
+                 └──────┬───────┘
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │ Debug        │
+                 └──────┬───────┘
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │ Compare      │
+                 └──────┬───────┘
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │ Build Model  │
+                 └──────┬───────┘
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │ Revisit      │
+                 └──────┬───────┘
+                        │
+                        └──────────► Improve
 ```
 
 > **Understand the problem first. Redis is the tool.**
 
+---
+
+# 🗺️ 30 — The Next Learning Path
+
+The next stage of this repository should move from **using Redis** to **designing Redis-backed systems**.
+
+```text
+CURRENT
+  │
+  ├── Strings
+  ├── Hashes
+  ├── Lists
+  ├── TTL
+  ├── Queues
+  ├── BullMQ
+  └── Pub/Sub
+       │
+       ▼
+NEXT
+  │
+  ├── Sets
+  ├── Sorted Sets
+  ├── Cache-Aside
+  ├── Rate Limiting
+  ├── Sessions
+  ├── Transactions
+  ├── Pipelines
+  └── Streams
+       │
+       ▼
+ADVANCED
+  │
+  ├── Lua scripting
+  ├── Distributed locks
+  ├── Persistence
+  ├── Replication
+  ├── Sentinel
+  ├── Cluster
+  ├── Memory optimization
+  └── Observability
+       │
+       ▼
+PRODUCTION
+  │
+  ├── Failure handling
+  ├── High availability
+  ├── Scaling
+  ├── Monitoring
+  ├── Security
+  └── Architecture decisions
+```
+
+---
+
+# 📚 31 — Six-Month Revision Map
+
+When returning to this repository months later, don't start by reading every command.
+
+Start with the problem:
+
+```text
+Need FAST access?
+        ↓
+      Redis
+
+Need TEMPORARY data?
+        ↓
+       TTL
+
+Need an OBJECT?
+        ↓
+   JSON / Hash
+
+Need ORDERED data?
+        ↓
+      List
+
+Need UNIQUE data?
+        ↓
+       Set
+
+Need RANKING?
+        ↓
+   Sorted Set
+
+Need BACKGROUND WORK?
+        ↓
+   Queue / BullMQ
+
+Need REAL-TIME EVENTS?
+        ↓
+      Pub/Sub
+
+Need RELIABLE EVENT HISTORY?
+        ↓
+      Streams
+
+Need DISTRIBUTED COORDINATION?
+        ↓
+       Locks
+```
+
+---
+
+# 🧠 Final Mental Model
+
+If I remember only one diagram from this repository, it should be this:
+
+```text
+                         REDIS
+                           │
+             ┌─────────────┼─────────────┐
+             │             │             │
+             ▼             ▼             ▼
+            DATA        TEMPORARY     MESSAGING
+             │             │             │
+       ┌─────┼─────┐       │       ┌─────┼─────┐
+       ▼     ▼     ▼       ▼       ▼     ▼     ▼
+    String Hash  List     TTL     Queue Pub/Sub Streams
+       │     │     │                │
+       ▼     ▼     ▼                ▼
+    Values Object Queue          Backend Work
+       │
+       └──────────────┬─────────────────────┐
+                      ▼                     ▼
+                   Cache                 Sessions
+                      │
+                      ▼
+                Fast Backend
+```
+
+---
+
+# ⭐ The Real Goal
+
+The goal of this repository is **not**:
+
+```text
+❌ Memorize Redis commands
+```
+
+It is:
+
+```text
+Backend Problem
+      ↓
+Understand the requirement
+      ↓
+Choose the right Redis data structure
+      ↓
+Choose the right Redis pattern
+      ↓
+Implement it
+      ↓
+Understand the trade-offs
+      ↓
+Know when Redis should NOT be used
+```
+
+> ### **The real Redis skill is not knowing `SET`, `GET`, or `HSET`.**
+>
+> ### **The real skill is seeing a backend problem and recognizing the Redis primitive or pattern that solves it.**
+
+---
+
+# 🚀 Repository Philosophy
+
+```text
+Learn
+  ↓
+Build
+  ↓
+Break
+  ↓
+Debug
+  ↓
+Understand
+  ↓
+Document
+  ↓
+Revisit
+  ↓
+Build something better
+```
+
+This repository will evolve from:
+
+> **“Learning Redis commands”**
+
+into:
+
+> **“Understanding Redis as a backend infrastructure component.”**
+
+---
+
+## 👨‍💻 Author
+
+**Deepak Yadav**
+
+Computer Engineering Student
+Backend / Full-Stack Development • Redis • Node.js • MongoDB • PostgreSQL
+
+---
+
+## 📄 License
+
+This repository is maintained as a personal learning and experimentation resource.
+
+---
+
+<p align="center">
+  <strong>⚡ Learn the problem. Choose the data structure. Build the system.</strong>
+</p>
+
+<p align="center">
+  <sub>Redis Learning Journey • Built for understanding, experimentation, and revision.</sub>
+</p>
